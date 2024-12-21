@@ -1,6 +1,6 @@
 name: checks
 
-on: 
+on:
   push:
 
 jobs:
@@ -8,14 +8,31 @@ jobs:
     name: Test and Lint
     runs-on: ubuntu-20.04
     steps:
+      # Step 1: Install Docker Compose
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.22.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+          docker-compose --version
+
+      # Step 2: Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Step 3: Checkout the Code
       - name: Checkout
         uses: actions/checkout@v2
+
+      # Step 4: Run Tests
       - name: Test
         run: docker-compose run --rm app sh -c "python manage.py test"
+
+      # Step 5: Run Lint
       - name: Lint
         run: docker-compose run --rm app sh -c "flake8"
