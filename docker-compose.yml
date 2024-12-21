@@ -5,10 +5,10 @@ services:
     build: 
       context: .
       args:
-        - DEV=true
+        - DEV=true # Pass build argument for the Dockerfile
     ports:
-      - "8000:8000"
+      - "8000:8000" # Map port 8000 on the host to port 8000 in the container
     volumes:
-      - ./app:/app
+      - ./app:/app # Mount the local ./app directory to /app in the container
     command: >
-     sh -c "python manage.py runserver 0.0.0.0:8000"
+      sh -c "python manage.py runserver 0.0.0.0:8000" # Run Django development server
