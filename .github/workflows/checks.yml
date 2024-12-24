@@ -31,7 +31,7 @@ jobs:
 
       # Step 4: Run Tests
       - name: Test
-        run: docker-compose run --rm app sh -c "python manage.py test"
+        run: docker-compose run --rm app sh -c "python manage.py wait_for_db && python manage.py test"
 
       # Step 5: Run Lint
       - name: Lint

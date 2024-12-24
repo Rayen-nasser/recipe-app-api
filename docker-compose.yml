@@ -2,13 +2,40 @@ version: '3.9'
 
 services:
   app:
-    build: 
+    build:
       context: .
+      # Specify the build context (directory containing the Dockerfile). Here, the current directory.
       args:
-        - DEV=true # Pass build argument for the Dockerfile
+        DEV: "true" # Ensure strings are explicitly quoted
+        # Pass a build argument to the Dockerfile. Useful for conditional builds (e.g., enabling debug features).
     ports:
-      - "8000:8000" # Map port 8000 on the host to port 8000 in the container
+      - "8000:8000" # Host port 8000 maps to container port 8000
+      # Map port 8000 on the host to port 8000 in the container. Access the app locally via http://localhost:8000.
     volumes:
-      - ./app:/app # Mount the local ./app directory to /app in the container
+      - ./app:/app # Mount the local `./app` directory to `/app` in the container. This allows real-time updates during development.
     command: >
-      sh -c "python manage.py runserver 0.0.0.0:8000" # Run Django development server
+      sh -c "python manage.py wait_for_db && 
+             python manage.py migrate && 
+             python manage.py runserver 0.0.0.0:8000" # Command to run when the container starts. Runs the Django development server, accessible from all network interfaces.
+    environment:
+      DB_HOST: db
+      DB_NAME: devdb
+      DB_USER: postgres
+      DB_PASS: postgres
+    depends_on:
+      - db
+      # Ensure the `db` service (database container) is started before the `app` service.
+
+  db:
+    image: postgres:13-alpine
+    # Use the lightweight Alpine-based image for PostgreSQL version 13.
+    volumes:
+      - dev-db-data:/var/lib/postgresql/data
+      # Mount a named volume (`dev-db-data`) to persist database data across container restarts.
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: devdb
+
+volumes:
+  dev-db-data: # Define a named volume `dev-db-data` to store database files. Data persists even if the container is removed.
