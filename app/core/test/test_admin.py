@@ -1,5 +1,5 @@
 """
-test from the django admin modification
+Test for the Django admin modifications.
 """
 
 from django.test import TestCase
@@ -9,6 +9,7 @@ from django.test import Client
 
 class AdminSiteTests(TestCase):
     """Test the admin site functionality"""
+
     def setUp(self):
         """Create a test user and client"""
         self.client = Client()
@@ -25,7 +26,7 @@ class AdminSiteTests(TestCase):
         )
 
     def test_user_list(self):
-        """Test user list view"""
+        """Test that users are listed on the user page"""
         url = reverse('admin:core_user_changelist')
         res = self.client.get(url)
 
@@ -33,13 +34,17 @@ class AdminSiteTests(TestCase):
         self.assertContains(res, self.user.email)
 
     def test_edit_user_page(self):
-        """Test the edit user page"""
+        """Test that the edit user page works"""
         url = reverse('admin:core_user_change', args=[self.user.id])
         res = self.client.get(url)
+
         self.assertEqual(res.status_code, 200)
+        self.assertTemplateUsed(res, 'admin/change_form.html')
 
     def test_create_user_page(self):
-        """Test the cerate user page"""
+        """Test that the create user page works"""
         url = reverse('admin:core_user_add')
         res = self.client.get(url)
+
         self.assertEqual(res.status_code, 200)
+        self.assertTemplateUsed(res, 'admin/change_form.html')
