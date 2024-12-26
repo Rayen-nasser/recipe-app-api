@@ -11,6 +11,7 @@ from rest_framework import status
 
 CREATE_USER_URL = reverse('user:create')
 TOKEN_URL = reverse('user:token')
+ME_URL = reverse('user:me')
 
 
 def create_user(**params):
@@ -62,7 +63,7 @@ class PublicUserApiTests(TestCase):
         ).exists()
         self.assertFalse(user_exists)
 
-    def test_create_token_fr_user(self):
+    def test_create_token_for_user(self):
         """Test that a token is created for the user"""
         user_details = {
             'email': 'test@example.com',
@@ -80,16 +81,8 @@ class PublicUserApiTests(TestCase):
 
     def test_create_token_invalid_credentials(self):
         """Test that token is not created with invalid credentials"""
-        user_details = {
-            'email': 'test@example.com',
-            'password': 'password123',
-            'name': 'Test User'
-        }
-        create_user(**user_details)
-        payload = {
-            'email': user_details['email'],
-            'password': user_details['password']
-        }
+        create_user(email='test@example.com', password='password123')
+        payload = {'email': 'test@example.com', 'password': 'badpass'}
         response = self.client.post(TOKEN_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertNotIn('token', response.data)
@@ -113,26 +106,65 @@ class PublicUserApiTests(TestCase):
             'name': 'Test User'
         }
         create_user(**user_details)
-        # missing 'email' field
-        payload = {
-            'email': '',
-            'password': user_details['password']
-        }
+
+        payload = {'email': '', 'password': user_details['password']}
         response = self.client.post(TOKEN_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertNotIn('token', response.data)
-        # missing 'password' field
-        payload = {
-            'email': user_details['email'],
-            'password': ''
-        }
+
+        payload = {'email': user_details['email'], 'password': ''}
         response = self.client.post(TOKEN_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertNotIn('token', response.data)
-        # missing both 'email' and 'password' fields
+
         payload = {}
         response = self.client.post(TOKEN_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertNotIn('token', response.data)
 
-# Added the required newline at the end of the file
+    def test_retrieve_user_unauthorized(self):
+        """Test that authentication required"""
+        response = self.client.get(ME_URL)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PrivateUserTests(TestCase):
+    """Test the private features of the user API"""
+
+    def setUp(self):
+        """Create a user and token before each test"""
+        self.user = create_user(
+            email='test@example.com',
+            password='password123',
+            name='Test User'
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_retrieve_profile_success(self):
+        """Test retrieving profile for logged in user"""
+        response = self.client.get(ME_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {
+            'email': self.user.email,
+            'name': self.user.name
+        })
+
+    def test_update_profile_success(self):
+        """Test updating profile for authenticated user."""
+        payload = {'name': 'Updated Test User', 'password': 'newpassword12345'}
+
+        response = self.client.patch(ME_URL, payload=payload)
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.name, payload['name'])
+        self.assertTrue(self.user.check_password(payload['password']))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_post_me_not_allowed(self):
+        """Test that POST is not allowed on the me endpoint"""
+        response = self.client.post(ME_URL, {})
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_405_METHOD_NOT_ALLOWED
+        )
