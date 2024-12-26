@@ -10,6 +10,7 @@ from rest_framework import status
 
 
 CREATE_USER_URL = reverse('user:create')
+TOKEN_URL = reverse('user:token')
 
 
 def create_user(**params):
@@ -60,5 +61,78 @@ class PublicUserApiTests(TestCase):
             email=payload['email']
         ).exists()
         self.assertFalse(user_exists)
+
+    def test_create_token_fr_user(self):
+        """Test that a token is created for the user"""
+        user_details = {
+            'email': 'test@example.com',
+            'password': 'password123',
+            'name': 'Test User'
+        }
+        create_user(**user_details)
+        payload = {
+            'email': user_details['email'],
+            'password': user_details['password']
+        }
+        response = self.client.post(TOKEN_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+
+    def test_create_token_invalid_credentials(self):
+        """Test that token is not created with invalid credentials"""
+        user_details = {
+            'email': 'test@example.com',
+            'password': 'password123',
+            'name': 'Test User'
+        }
+        create_user(**user_details)
+        payload = {
+            'email': user_details['email'],
+            'password': user_details['password']
+        }
+        response = self.client.post(TOKEN_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn('token', response.data)
+
+    def test_create_token_no_user(self):
+        """Test that token is not created if user doesn't exist"""
+        payload = {
+            'email': 'test@example.com',
+            'password': 'password123',
+            'name': 'Test User'
+        }
+        response = self.client.post(TOKEN_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn('token', response.data)
+
+    def test_create_token_missing_field(self):
+        """Test that token is not created if required field is missing"""
+        user_details = {
+            'email': 'test@example.com',
+            'password': 'password123',
+            'name': 'Test User'
+        }
+        create_user(**user_details)
+        # missing 'email' field
+        payload = {
+            'email': '',
+            'password': user_details['password']
+        }
+        response = self.client.post(TOKEN_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn('token', response.data)
+        # missing 'password' field
+        payload = {
+            'email': user_details['email'],
+            'password': ''
+        }
+        response = self.client.post(TOKEN_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn('token', response.data)
+        # missing both 'email' and 'password' fields
+        payload = {}
+        response = self.client.post(TOKEN_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn('token', response.data)
 
 # Added the required newline at the end of the file
