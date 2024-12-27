@@ -1,5 +1,5 @@
 # Import necessary modules and classes from the rest_framework library
-from rest_framework import generics
+from rest_framework import generics, authentication, permissions
 # Import the base class for creating views that handle HTTP POST requests
 from rest_framework.authtoken.views import ObtainAuthToken
 # Import the API settings from Django REST framework for global settings
@@ -27,3 +27,18 @@ class CreateTokenView(ObtainAuthToken):
     """
     serializer_class = AuthTokenSerializer
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
+
+class ManageTokenView(generics.RetrieveUpdateAPIView):
+    """
+    View for managing the user's auth token.
+    """
+    serializer_class = UserSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        """
+        Return the authenticated user.
+        """
+        return self.request.user
+    
