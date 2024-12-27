@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from core.models import Recipe
 from recipe.serializers import RecipeSerializer  # Corrected import statement
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """
