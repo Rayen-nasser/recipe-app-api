@@ -161,7 +161,6 @@ class PrivateUserTests(TestCase):
         self.assertEqual(self.user.name, payload['name'])
         self.assertTrue(self.user.check_password(payload['password']))
 
-
     def test_post_me_not_allowed(self):
         """Test that POST is not allowed on the me endpoint"""
         response = self.client.post(ME_URL, {})
