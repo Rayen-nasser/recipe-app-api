@@ -152,14 +152,15 @@ class PrivateUserTests(TestCase):
 
     def test_update_profile_success(self):
         """Test updating profile for authenticated user."""
-        payload = {'name': 'Updated Test User', 'password': 'newpassword12345'}
+        payload = {'name': 'Updated User', 'password': 'newpassword123'}
 
-        response = self.client.patch(ME_URL, payload=payload)
-
+        response = self.client.patch(ME_URL, payload)
         self.user.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(self.user.name, payload['name'])
         self.assertTrue(self.user.check_password(payload['password']))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 
     def test_post_me_not_allowed(self):
         """Test that POST is not allowed on the me endpoint"""
