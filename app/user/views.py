@@ -28,6 +28,7 @@ class CreateTokenView(ObtainAuthToken):
     serializer_class = AuthTokenSerializer
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
 
+
 class ManageTokenView(generics.RetrieveUpdateAPIView):
     """
     View for managing the user's auth token.
@@ -41,4 +42,3 @@ class ManageTokenView(generics.RetrieveUpdateAPIView):
         Return the authenticated user.
         """
         return self.request.user
-    
