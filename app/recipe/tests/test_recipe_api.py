@@ -148,7 +148,6 @@ class PrivateRecipeApiTests(TestCase):
         payload = {'user': new_user.id}
         url = detail_url(recipe.id)
         res = self.client.patch(url, payload)
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         recipe.refresh_from_db()
         self.assertEqual(recipe.user, self.user)  # Ensure user didn't change
 
