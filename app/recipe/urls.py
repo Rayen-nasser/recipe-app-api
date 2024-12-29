@@ -12,6 +12,7 @@ router.register('tags', views.TagViewSet, basename='tag')
 
 app_name = 'recipe'
 
+
 urlpatterns = [
     path('', include(router.urls)),  # Include the URLs from the router
 ]

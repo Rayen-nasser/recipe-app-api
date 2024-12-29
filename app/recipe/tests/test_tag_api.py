@@ -9,15 +9,18 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 from core.models import Tag
-from recipe.serializers import TagSerializer
+from recipe.serializers import TagsSerializer
 
-TAG_URL = reverse('tag:tag-list')
+TAG_URL = reverse('recipe:tag-list')
 
 
 def create_user(email="user@example.com", password="password123"):
     """Create and return a new user."""
     return get_user_model().objects.create_user(email=email, password=password)
 
+def detail_url(tag_id=None):
+    """Return the URL for the tag model."""
+    return reverse('recipe:tag-detail', args=[tag_id])
 
 class PublicTagApiTests(TestCase):
     """Test unauthenticated tag API access."""
@@ -51,7 +54,7 @@ class PrivateTagApiTests(TestCase):
 
         # Fetch tags from the database
         tags = Tag.objects.all().order_by('-name')
-        serializer = TagSerializer(tags, many=True)
+        serializer = TagsSerializer(tags, many=True)
 
         # Verify the response
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -59,20 +62,30 @@ class PrivateTagApiTests(TestCase):
 
     def test_tags_limited_to_tags(self):
         """Test that tags are limited to the authenticated user."""
-        user2 = create_user(email='test2@example.com', password='password456')
-        Tag.objects.create(user=user2, name='Gluten-free')
-        tag = Tag.objects.create(user=self.user, name='Gluten-free')
+        other_user = get_user_model().objects.create_user(
+            'other@example.com',
+            'password123'
+        )
+        Tag.objects.create(user=other_user, name='OtherTag')
+        Tag.objects.create(user=self.user, name='MyTag')
 
-        # Authenticate as user1 and retrieve tags
         res = self.client.get(TAG_URL)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 1)
-        self.assertEqual(res.data[0]['name'], tag.name)
 
-        # Authenticate as user2 and retrieve tags
-        user2_client = APIClient()
-        user2_client.force_authenticate(user2)
-        res = user2_client.get(TAG_URL)
+        tags = Tag.objects.filter(user=self.user)
+        serializer = TagsSerializer(tags, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 0)
-        
+        self.assertEqual(res.data, serializer.data)
+
+
+    def test_update_tags(self):
+        """Test updating a tag."""
+        tag = Tag.objects.create(user=self.user, name='Breakfast')
+        payload = {'name': 'Brunch'}
+
+        url = detail_url(tag.id)
+        res = self.client.patch(url, payload)
+
+        tag.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(tag.name, payload['name'])
+
