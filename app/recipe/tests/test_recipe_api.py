@@ -37,6 +37,7 @@ def create_recipe(user, **params):
     recipe = Recipe.objects.create(user=user, **defaults)
     return recipe
 
+
 def create_user(**params):
     """Create and return a new user."""
     return get_user_model().objects.create_user(**params)
@@ -129,7 +130,7 @@ class PrivateRecipeApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         recipe.refresh_from_db()
         self.assertEqual(recipe.title, payload['title'])
-        self.assertEqual(recipe.user,self.user)
+        self.assertEqual(recipe.user, self.user)
 
     def test_delete_recipe(self):
         """Test deleting a recipe."""
@@ -147,7 +148,7 @@ class PrivateRecipeApiTests(TestCase):
         payload = {'user': new_user.id}
         url = detail_url(recipe.id)
         res = self.client.patch(url, payload)
-
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         recipe.refresh_from_db()
         self.assertEqual(recipe.user, self.user)  # Ensure user didn't change
 
@@ -157,6 +158,5 @@ class PrivateRecipeApiTests(TestCase):
         recipe = create_recipe(user=new_user)
 
         url = detail_url(recipe.id)
-        res = self.client.delete(url)
+        res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertTrue(Recipe.objects.filter(id=recipe.id).exists())

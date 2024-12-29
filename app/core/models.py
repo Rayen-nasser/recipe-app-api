@@ -61,6 +61,7 @@ class Recipe(models.Model):
     def __str__(self):
         return self.title
 
+
 class Tag(models.Model):
     """Tag object"""
     name = models.CharField(max_length=50)
@@ -68,5 +69,8 @@ class Tag(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
     )
+
     def __str__(self):
         return self.name
+
+# Ensure the file ends with a newline

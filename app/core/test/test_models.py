@@ -14,6 +14,7 @@ def create_user(email="user@gmail.com", password="password"):
     """Helper function to create a user"""
     return get_user_model().objects.create_user(email, password)
 
+
 class ModelTests(TestCase):
     """Test models"""
 
@@ -75,3 +76,5 @@ class ModelTests(TestCase):
             user=user,
         )
         self.assertEqual(str(tag), tag.name)
+
+# Ensure the file ends with a newline
