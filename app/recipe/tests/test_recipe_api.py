@@ -37,7 +37,7 @@ def create_recipe(user, **params):
     }
     defaults.update(params)
 
-    recipe = Recipe.objects.create(user=user, **defaults)
+    recipe = Recipe.objects.create(user=user, **defaults) # are create method from serializer recipe
     return recipe
 
 
@@ -220,3 +220,43 @@ class PrivateRecipeApiTests(TestCase):
         # Check if the 'foo' tag is created
         tag_foo = Tag.objects.get(name='foo', user=self.user)
         self.assertIn(tag_foo, recipe.tags.all())
+
+    def test_create_tag_on_update(self):
+        """Test creating a tag when updating a recipe."""
+        recipe = Recipe.objects.create(
+            user=self.user,
+            title='Test Recipe',
+            time_minutes=60,
+            price=Decimal('15.99'),
+            description='This is a test recipe.',
+            link='http://example.com/test-recipe'
+            )
+        payload = {
+            'title': 'Updated Recipe',
+            'time_minutes': 60,
+            'price': Decimal('15.99'),
+            'description': 'This is an updated test recipe.',
+            'link': 'http://example.com/updated-recipe',
+            'tags': [{'name': 'foo'}, {'name': 'fruit'}]
+            }
+
+        url = detail_url(recipe_id=recipe.id)
+        res = self.client.patch(url, payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        recipe.refresh_from_db()
+        self.assertEqual(recipe.tags.count(), 2)
+
+    def test_clear_recipe_tags(self):
+        """Test clearing a recipe tags"""
+        tag = Tag.objects.create(name='foo', user=self.user)
+        recipe = create_recipe(user=self.user)
+        recipe.tags.add(tag)
+
+        payload = {'tags': []}
+        url = detail_url(recipe_id=recipe.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(recipe.tags.count(), 0)
+
+
