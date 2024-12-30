@@ -22,23 +22,36 @@ class RecipeSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id']
 
+    def _get_or_create_tags(self, tags_data, recipe):
+        """Helper to get or create existing tags."""
+        for tag_data in tags_data:
+            tag_obj, created = Tag.objects.get_or_create(
+                user=recipe.user,
+                **tag_data
+            )
+            recipe.tags.add(tag_obj)
+
     def create(self, validated_data):
         """Create a new recipe."""
         tags_data = validated_data.pop('tags', [])
+        # validated_data['user'] = self.context['request'].user
         recipe = Recipe.objects.create(**validated_data)
-        auth_user = self.context['request'].user
-
-        # Handle tags
-        for tag_data in tags_data:
-            tag_obj, created = Tag.objects.get_or_create(
-                user=auth_user,
-                **tag_data
-            )
-
-            recipe.tags.add(tag_obj) # are if tag exit will not add to database ?
+        self._get_or_create_tags(tags_data, recipe)
 
         return recipe
 
+    def update(self, instance, validated_data):
+        """Update an existing recipe."""
+        tags = validated_data.pop('tags', [])
+        if tags is not None:
+            instance.tags.clear()
+            self._get_or_create_tags(tags, instance)
+
+        for attr, key in validated_data.items():
+            setattr(instance, attr, key)
+
+        instance.save()
+        return instance
 
 class RecipeDetailSerializer(RecipeSerializer):
     """Serializer for recipe objects with extra details."""
