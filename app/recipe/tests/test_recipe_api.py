@@ -9,7 +9,10 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from core.models import Recipe
+from core.models import (
+    Recipe,
+    Tag
+)
 from recipe.serializers import (
     RecipeSerializer,
     RecipeDetailSerializer,
@@ -159,3 +162,61 @@ class PrivateRecipeApiTests(TestCase):
         url = detail_url(recipe.id)
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_create_recipe_with_new_tags(self):
+        """Test creating a recipe with new tags."""
+        payload = {
+            'title': 'Test Recipe',
+            'time_minutes': 60,
+            'price': Decimal('15.99'),
+            'description': 'This is a test recipe.',
+            'link': 'http://example.com/test-recipe',
+            'tags': [{'name': 'foo'}, {'name': 'fruit'}]
+        }
+        res = self.client.post(RECIPE_URL, payload, format='json')
+
+        # Check the response status
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        # Verify that the recipe was created
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)
+        recipe = recipes[0]
+
+        # Verify that the tags were associated correctly
+        self.assertEqual(recipe.tags.count(), 2)
+        for tag_data in payload['tags']:
+            tag = Tag.objects.get(name=tag_data['name'], user=self.user)
+            self.assertIn(tag, recipe.tags.all())
+
+    def test_create_recipe_with_existing_tags(self):
+        """Test creating a recipe with existing tags."""
+        tag_fruit = Tag.objects.create(name="fruit", user=self.user)
+        payload = {
+            'title': 'Test Recipe',
+            'time_minutes': 60,
+            'price': Decimal('15.99'),
+            'description': 'This is a test recipe.',
+            'link': 'http://example.com/test-recipe',
+            'tags': [
+                {'name': 'foo'},
+                {'name': 'fruit'}  # This tag should be linked
+            ]
+        }
+        res = self.client.post(RECIPE_URL, payload, format='json')
+
+        # Check the response status
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        # Verify that the recipe was created
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)
+        recipe = recipes[0]
+
+        # Verify that the tags were associated correctly
+        self.assertEqual(recipe.tags.count(), 2)
+        self.assertIn(tag_fruit, recipe.tags.all())
+
+        # Check if the 'foo' tag is created
+        tag_foo = Tag.objects.get(name='foo', user=self.user)
+        self.assertIn(tag_foo, recipe.tags.all())

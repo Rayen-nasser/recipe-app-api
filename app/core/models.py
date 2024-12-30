@@ -3,6 +3,8 @@ from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
 from django.conf import settings
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 
 class UserManager(BaseUserManager):
@@ -12,7 +14,11 @@ class UserManager(BaseUserManager):
         """Create and return a `User` with an email and password."""
         if not email:
             raise ValueError('Email must be provided.')
-        # Normalize the email
+        try:
+            validate_email(email)
+        except ValidationError:
+            raise ValueError('Invalid email format.')
+
         email = self.normalize_email(email)
         extra_fields.setdefault('is_active', True)
         user = self.model(email=email, **extra_fields)
@@ -49,14 +55,18 @@ class Recipe(models.Model):
     """Recipe object"""
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='recipes'
     )
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     time_minutes = models.IntegerField()
     price = models.DecimalField(max_digits=5, decimal_places=2)
-    link = models.CharField(max_length=255, blank=True)
-    tags = models.ManyToManyField('Tag', blank=True)
+    link = models.URLField(max_length=255, blank=True)
+    tags = models.ManyToManyField('Tag', blank=True, related_name='recipes')
+
+    class Meta:
+        ordering = ['title']
 
     def __str__(self):
         return self.title
@@ -67,10 +77,12 @@ class Tag(models.Model):
     name = models.CharField(max_length=50)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='tags'
     )
+
+    class Meta:
+        ordering = ['name']
 
     def __str__(self):
         return self.name
-
-# Ensure the file ends with a newline
