@@ -18,9 +18,6 @@ class IngredientsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ['id', 'name', 'quantity', 'measurement']
-        extra_kwargs = {
-            'quantity': {'min_value': 0},
-        }
 
     def create(self, validated_data):
         """Create an Ingredient with the user context."""
