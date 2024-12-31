@@ -27,6 +27,8 @@ ARG DEV=false
 RUN apk update && \
     apk add --no-cache \
         postgresql-client \
+        jpeg-dev \
+        zlib-dev \
         build-base \
         postgresql-dev \
         musl-dev && \
@@ -46,4 +48,5 @@ RUN adduser \
     --disabled-password \
     --no-create-home \
     django-user
+
 USER django-user
