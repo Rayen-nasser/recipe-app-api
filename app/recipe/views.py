@@ -46,8 +46,8 @@ class BaseRecipeAttrViewSet(
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
     mixins.ListModelMixin,
-    viewsets.GenericViewSet
-    ):
+    viewsets.GenericViewSet,  # Correct indentation
+):
     """
     Base class for recipe attributes (tags, ingredients).
     """

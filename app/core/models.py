@@ -64,7 +64,9 @@ class Recipe(models.Model):
     price = models.DecimalField(max_digits=5, decimal_places=2)
     link = models.URLField(max_length=255, blank=True)
     tags = models.ManyToManyField('Tag', blank=True, related_name='recipes')
-    ingredients = models.ManyToManyField('Ingredient', blank=True, related_name='recipes')
+    ingredients = models.ManyToManyField(
+        'Ingredient', blank=True, related_name='recipes'
+    )
 
     class Meta:
         ordering = ['title']
