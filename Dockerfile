@@ -43,10 +43,16 @@ RUN apk update && \
 # Update the PATH environment variable to include the virtual environment binaries.
 ENV PATH="/py/bin:$PATH"
 
-# Create a non-root user and switch to it for better security.
+# Create a non-root user and set permissions for secure file access.
 RUN adduser \
     --disabled-password \
     --no-create-home \
-    django-user
+    django-user && \
+    mkdir -p /vol/web/media && \
+    mkdir -p /vol/web/static && \
+    chown -R django-user:django-user /vol && \
+    chmod -R 755 /vol
 
+# Switch to the non-root user.
 USER django-user
+

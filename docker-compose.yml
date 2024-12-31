@@ -13,9 +13,10 @@ services:
       # Map port 8000 on the host to port 8000 in the container. Access the app locally via http://localhost:8000.
     volumes:
       - ./app:/app # Mount the local `./app` directory to `/app` in the container. This allows real-time updates during development.
+      - dev-static-data:/vol/web
     command: >
-      sh -c "python manage.py wait_for_db && 
-             python manage.py migrate && 
+      sh -c "python manage.py wait_for_db &&
+             python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000" # Command to run when the container starts. Runs the Django development server, accessible from all network interfaces.
     environment:
       DB_HOST: db
@@ -39,3 +40,4 @@ services:
 
 volumes:
   dev-db-data: # Define a named volume `dev-db-data` to store database files. Data persists even if the container is removed.
+  dev-static-data: # Define a named volume `dev-static-data` to store static
