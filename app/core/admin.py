@@ -26,3 +26,5 @@ class UserAdmin(BaseAdmin):
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.Recipe)
 admin.site.register(models.Tag)
+
+# Add a blank line at the end of the file

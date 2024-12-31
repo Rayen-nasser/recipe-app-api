@@ -132,3 +132,6 @@ class PrivateIngredientApiTests(TestCase):
         self.assertFalse(Ingredient.objects.filter(
             id=ingredient.id
         ).exists())
+
+
+# Add a blank line at the end of the file
