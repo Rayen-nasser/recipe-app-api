@@ -97,7 +97,7 @@ class Ingredient(models.Model):
         on_delete=models.CASCADE,
         related_name='ingredients'
         )
-    quantity = models.IntegerField(default=0)
+    quantity = models.IntegerField(null=True, blank=True)
     measurement = models.CharField(max_length=20, blank=True, null=True)
 
     class Meta:
