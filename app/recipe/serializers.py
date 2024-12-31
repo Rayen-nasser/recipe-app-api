@@ -28,11 +28,12 @@ class IngredientsSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     """Serializer for Recipe objects."""
     tags = TagsSerializer(many=True, required=False)
+    ingredients = IngredientsSerializer(many=True, required=False)
 
     class Meta:
         model = Recipe
         fields = [
-            'id', 'title', 'description', 'time_minutes', 'price', 'link', 'tags'
+            'id', 'title', 'description', 'time_minutes', 'price', 'link', 'tags', 'ingredients',
         ]
         read_only_fields = ['id']
 
@@ -46,19 +47,36 @@ class RecipeSerializer(serializers.ModelSerializer):
                 )
                 recipe.tags.add(tag_obj)
 
+    def _get_or_create_ingredients(self, ingredients_data, recipe):
+        """Helper method to get or create tags."""
+        if ingredients_data:
+            for ingredient_data in ingredients_data:
+                ingredient_obj, created = Ingredient.objects.get_or_create(
+                    user=recipe.user,
+                    **ingredient_data
+                )
+                recipe.ingredients.add(ingredient_obj)
+
     def create(self, validated_data):
         """Create a new Recipe."""
         tags_data = validated_data.pop('tags', [])
+        ingredients_data = validated_data.pop('ingredients', [])
         recipe = Recipe.objects.create(**validated_data)
         self._get_or_create_tags(tags_data, recipe)
+        self._get_or_create_ingredients(ingredients_data, recipe)
         return recipe
 
     def update(self, instance, validated_data):
         """Update an existing Recipe."""
         tags = validated_data.pop('tags', [])
+        ingredients = validated_data.pop('ingredients', [])
         if tags is not None:
             instance.tags.clear()
             self._get_or_create_tags(tags, instance)
+
+        if ingredients is not None:
+            instance.ingredients.clear()
+            self._get_or_create_ingredients(ingredients, instance)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
