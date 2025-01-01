@@ -1,3 +1,6 @@
+import os
+import uuid
+
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
@@ -6,6 +9,12 @@ from django.conf import settings
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
+
+def recipe_image_file_path(instance, filename):
+    """Generate file path for new recipe image"""
+    ext = os.path.splitext(filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join('uploads', 'recipe', filename)
 
 class UserManager(BaseUserManager):
     """Define a model manager for User model with email as the username."""
@@ -67,6 +76,7 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         'Ingredient', blank=True, related_name='recipes'
     )
+    image = models.ImageField(upload_to=recipe_image_file_path, null=True)
 
     class Meta:
         ordering = ['title']
