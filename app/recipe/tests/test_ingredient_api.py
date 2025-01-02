@@ -1,14 +1,14 @@
 """
 Tests for Ingredient API.
 """
-
+from decimal import Decimal
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from core.models import Ingredient
+from core.models import (Ingredient, Recipe)
 from recipe.serializers import IngredientsSerializer
 
 
@@ -133,5 +133,41 @@ class PrivateIngredientApiTests(TestCase):
             id=ingredient.id
         ).exists())
 
+    def test_filter_ingredients_assigned_to_recipe(self):
+        """Test filtering ingredients by those assigned to a recipe."""
+        ingredient1 = Ingredient.objects.create(user= self.user, name='tomato', quantity=2)
+        ingredient2 = Ingredient.objects.create(user=self.user, name='foo', quantity=2)
+        recipe = Ingredient.objects.create(user=self.user, name='Recipe 1')
+        recipe.ingredients.add(ingredient1)
+        res = self.client.get(INGREDIENT_URL, {'assigned_only': recipe.id})
 
+        s1 = IngredientsSerializer(ingredient1)
+        s2 = IngredientsSerializer(ingredient2)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(len(res.data), 1)
+        self.assertIn(s1.data, res.data)
+        self.assertNotIn(s2.data, res.data)
+
+    def test_filtered_ingredients_unique(self):
+        """Test that ingredients are unique for each user."""
+        Ingredient.objects.create(user=self.user, name='tomato', quantity=2)
+        ing = Ingredient.objects.create(user=self.user, name='falafel', quantity=5)
+        recipe1 = Recipe.objects.create(
+            title='recipe 1',
+            time_minutes=10,
+            price=Decimal(10.00),
+            user=self.user
+        )
+        recipe2 = Recipe.objects.create(
+            title='recipe 2',
+            time_minutes=13,
+            price=Decimal(18.00),
+            user=self.user
+        )
+        recipe1.ingredients.add(ing)
+        recipe2.ingredients.add(ing)
+        res = self.client.get(INGREDIENT_URL, {'assigned_only': 1})
+
+        self.assertEqual(len(res.data), 1)
 # Add a blank line at the end of the file

@@ -1,14 +1,14 @@
 """
 Tests for Tag API.
 """
-
+from decimal import Decimal
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from core.models import Tag
+from core.models import (Tag, Recipe)
 from recipe.serializers import TagsSerializer
 
 TAG_URL = reverse('recipe:tag-list')
@@ -98,3 +98,41 @@ class PrivateTagApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Tag.objects.filter(id=tag.id).exists())
+
+    def test_filter_tags_assigned_to_recipe(self):
+        """Test filtering tags by those assigned to a recipe."""
+        tag1 = Tag.objects.create(user= self.user, name='tomato', quantity=2)
+        tag2 = Tag.objects.create(user=self.user, name='foo.')
+        recipe = Tag.objects.create(user=self.user, name='Recipe 1')
+        recipe.tags.add(tag1)
+        res = self.client.get(TAG_URL, {'assigned_to_recipe': recipe.id})
+
+        s1 = TagsSerializer(tag1)
+        s2 = TagsSerializer(tag2)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(len(res.data), 1)
+        self.assertIn(s1.data, res.data)
+        self.assertNotIn(s2.data, res.data)
+
+    def test_filtered_tags_unique(self):
+        """Test that tags are unique for each user."""
+        Tag.objects.create(user=self.user, name='denier')
+        tag = Tag.objects.create(user=self.user, name='fast food')
+        recipe1 = Recipe.objects.create(
+            title='recipe 1',
+            time_minutes=10,
+            price=Decimal(10.00),
+            user=self.user
+        )
+        recipe2 = Recipe.objects.create(
+            title='recipe 2',
+            time_minutes=13,
+            price=Decimal(18.00),
+            user=self.user
+        )
+        recipe1.tags.add(tag)
+        recipe2.tags.add(tag)
+        res = self.client.get(TAG_URL, {'assigned_only': 1})
+
+        self.assertEqual(len(res.data), 1)
