@@ -338,6 +338,69 @@ class PrivateRecipeApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(recipe.ingredients.count(), 0)
 
+def test_get_recipes_by_tags(self):
+    """Test getting recipes by tags"""
+    # create some recipes with different tags
+    tag1 = Tag.objects.create(name='fruit', user=self.user)
+    tag2 = Tag.objects.create(name='vegetable', user=self.user)
+    recipe1 = create_recipe(user=self.user, title="recipe 1")
+    recipe2 = create_recipe(user=self.user, title="recipe 2")
+    recipe3 = create_recipe(user=self.user, title="recipe 3")
+    recipe4 = create_recipe(user=self.user, title="recipe 4")
+    recipe1.tags.add(tag1)
+    recipe2.tags.add(tag2)
+    recipe3.tags.add(tag1, tag2)
+
+    # send request with tags parameters as comma-separated string
+    params = {'tags': f'{tag1.id},{tag2.id}'}  # Changed to comma-separated string
+    res = self.client.get(RECIPE_URL, params)
+
+    # Serialize recipes
+    s1 = RecipeSerializer(recipe1)
+    s2 = RecipeSerializer(recipe2)
+    s3 = RecipeSerializer(recipe3)
+    s4 = RecipeSerializer(recipe4)
+
+    # check response
+    self.assertEqual(res.status_code, status.HTTP_200_OK)
+    self.assertIn(s1.data, res.data)
+    self.assertIn(s2.data, res.data)
+    self.assertIn(s3.data, res.data)
+    self.assertNotIn(s4.data, res.data)
+
+def test_get_recipes_by_ingredients(self):
+    """Test getting recipes by ingredients"""
+    # create some recipes with different ingredients
+    ingredient1 = Ingredient.objects.create(user=self.user, name='Fruit')
+    ingredient2 = Ingredient.objects.create(user=self.user, name='Vegetable')
+    recipe1 = create_recipe(user=self.user, title='Recipe 1',
+                          time_minutes=5, price=10.00)
+    recipe2 = create_recipe(user=self.user, title='Recipe 2',
+                          time_minutes=5, price=10.00)
+    recipe3 = create_recipe(user=self.user, title='Recipe 3',
+                          time_minutes=5, price=10.00)
+    recipe4 = create_recipe(user=self.user, title='Recipe 4',
+                          time_minutes=5, price=10.00)
+    recipe1.ingredients.add(ingredient1)
+    recipe2.ingredients.add(ingredient2)
+    recipe3.ingredients.add(ingredient1, ingredient2)
+
+    # send request with ingredients parameters as comma-separated string
+    params = {'ingredients': f'{ingredient1.id},{ingredient2.id}'}  # Changed to comma-separated string
+    res = self.client.get(RECIPE_URL, params)
+
+    # Serialize recipes
+    s1 = RecipeSerializer(recipe1)
+    s2 = RecipeSerializer(recipe2)
+    s3 = RecipeSerializer(recipe3)
+    s4 = RecipeSerializer(recipe4)
+
+    # check response
+    self.assertEqual(res.status_code, status.HTTP_200_OK)
+    self.assertIn(s1.data, res.data)
+    self.assertIn(s2.data, res.data)
+    self.assertIn(s3.data, res.data)
+    self.assertNotIn(s4.data, res.data)
 class ImageUpdateTestCase(TestCase):
     """Test for upload images API"""
 
