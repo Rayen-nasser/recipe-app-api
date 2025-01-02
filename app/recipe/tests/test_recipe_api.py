@@ -340,37 +340,51 @@ class PrivateRecipeApiTests(TestCase):
 
 class ImageUpdateTestCase(TestCase):
     """Test for upload images API"""
+
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
-            'testuser',
+            'test@gmail.com',
             'testpass'
-            )
-        self.recipe = create_recipe(user=self.user)
+        )
+        self.recipe = create_recipe(user=self.user)  # Ensure this helper function is defined
         self.client.force_authenticate(self.user)
 
-    def  tearDown(self):
-        self.recipe.image.delete()
+    def tearDown(self):
+        # Ensure this deletion works as expected and image exists
+        if self.recipe.image:
+            self.recipe.image.delete()
 
     def test_upload_image(self):
         """Test uploading an image to a recipe"""
-        url = image_upload_url(self.recipe.id)
+        url = image_upload_url(self.recipe.id)  # Ensure this function returns the correct URL
+
+        # Create a temporary image file for the upload
         with tempfile.NamedTemporaryFile(suffix='.jpg') as image_file:
-            img = Image.new('RGB', (10,10))
+            img = Image.new('RGB', (10, 10))
             img.save(image_file, format='JPEG')
             image_file.seek(0)
             payload = {'image': image_file}
+
+            # Perform the post request
             res = self.client.post(url, payload, format='multipart')
 
+        # Refresh the recipe from DB to check the saved image path
         self.recipe.refresh_from_db()
+
+        # Assert the correct response and image storage
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn('image', res.data)
-        self.assertTrue(os.path.exists(self.recipe.image.path))
+        self.assertIn('image', res.data)  # Check the image field is in the response data
+        self.assertTrue(os.path.exists(self.recipe.image.path))  # Check the image file exists
 
     def test_upload_invalid_image(self):
         """Test uploading an invalid image file"""
-        url = image_upload_url(self.recipe.id)
+        url = image_upload_url(self.recipe.id)  # Ensure this function returns the correct URL
+
+        # Sending an invalid image (a text file in this case)
         payload = {'image': 'invalid_image_file.txt'}
         res = self.client.post(url, payload, format='multipart')
+
+        # Assert that the request results in a bad request status
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 # Add a blank line at the end of the file
