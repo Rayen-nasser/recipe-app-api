@@ -34,7 +34,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = [
-            'id', 'title', 'description', 'time_minutes',
+            'id', 'title', 'time_minutes',
             'price', 'link', 'tags', 'ingredients',
         ]
         read_only_fields = ['id']
@@ -91,4 +91,16 @@ class RecipeDetailSerializer(RecipeSerializer):
     """Serializer for Recipe objects with extra details."""
     class Meta(RecipeSerializer.Meta):
         model = Recipe
-        fields = RecipeSerializer.Meta.fields  # Fixed line length
+        fields = RecipeSerializer.Meta.fields + ['description','image'] # Fixed line length
+
+
+class RecipeImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(use_url=True)
+    """Serializer for Recipe Image objects."""
+    class Meta:
+        model = Recipe
+        fields = ['id', 'image']
+        read_only_fields = ['id']
+        extra_kwargs = {'image': {'required': 'True'}}
+
+
