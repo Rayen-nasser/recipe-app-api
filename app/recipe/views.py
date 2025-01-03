@@ -35,26 +35,11 @@ from recipe.serializers import (
         parameters=[
             OpenApiParameter(
                 'tags',
-                OpenApiParameter.QUERY,
                 OpenApiTypes.STR,
-                description=(
-                    "Filter by tags. Provide a comma-separated list of tag IDs (e.g., `1,2,3`)."
-                ),
-                examples=[
-                    {"value": "1,2", "summary": "Filter recipes with tag IDs 1 and 2"}
-                ],
             ),
             OpenApiParameter(
                 'ingredients',
-                OpenApiParameter.QUERY,
                 OpenApiTypes.STR,
-                description=(
-                    "Filter by ingredients. Provide a comma-separated list of ingredient IDs "
-                    "(e.g., `4,5,6`)."
-                ),
-                examples=[
-                    {"value": "4,5", "summary": "Filter recipes with ingredient IDs 4 and 5"}
-                ],
             ),
         ]
     )
@@ -118,7 +103,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                'assigned_only',
+                OpenApiTypes.INT, enum=[0, 1],
+                description=(
+                    "Filter by assigned recipes. Provide `1` to only include tags "
+                    "or ingredients that are assigned to recipes."
+                ),
+            ),
+        ]
+       ),
+)
 class BaseRecipeAttrViewSet(
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
@@ -133,7 +131,13 @@ class BaseRecipeAttrViewSet(
 
     def get_queryset(self):
         """Retrieve tags for the authenticated user."""
-        return self.queryset.filter(user=self.request.user).order_by('-name')
+        assigned_only = bool(
+            int(self.request.query_params.get('assigned_only', 0))
+        )
+        queryset = self.queryset
+        if assigned_only:
+            queryset = queryset.filter(recipes__isnull=False)
+        return queryset.filter(user=self.request.user).order_by('-name').distinct()
 
 
 class TagViewSet(BaseRecipeAttrViewSet):
