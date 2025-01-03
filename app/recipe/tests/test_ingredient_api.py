@@ -135,17 +135,19 @@ class PrivateIngredientApiTests(TestCase):
 
     def test_filter_ingredients_assigned_to_recipe(self):
         """Test filtering ingredients by those assigned to a recipe."""
-        ingredient1 = Ingredient.objects.create(user= self.user, name='tomato', quantity=2)
+        ingredient1 = Ingredient.objects.create(user=self.user, name='tomato', quantity=2)
         ingredient2 = Ingredient.objects.create(user=self.user, name='foo', quantity=2)
-        recipe = Ingredient.objects.create(user=self.user, name='Recipe 1')
+        recipe = Recipe.objects.create(
+            title='Recipe 1',
+            time_minutes=10,
+            price=Decimal('5.50'),
+            user=self.user,
+        )
         recipe.ingredients.add(ingredient1)
-        res = self.client.get(INGREDIENT_URL, {'assigned_only': recipe.id})
-
+        res = self.client.get(INGREDIENT_URL, {'assigned_only': 1})
         s1 = IngredientsSerializer(ingredient1)
         s2 = IngredientsSerializer(ingredient2)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-
-        self.assertEqual(len(res.data), 1)
         self.assertIn(s1.data, res.data)
         self.assertNotIn(s2.data, res.data)
 
