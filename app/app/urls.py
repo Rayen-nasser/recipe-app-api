@@ -24,3 +24,4 @@ if settings.DEBUG:
         settings.MEDIA_URL,
         document_root=settings.MEDIA_ROOT
     )
+# Add a blank line at the end of the file

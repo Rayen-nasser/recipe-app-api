@@ -135,8 +135,16 @@ class PrivateIngredientApiTests(TestCase):
 
     def test_filter_ingredients_assigned_to_recipe(self):
         """Test filtering ingredients by those assigned to a recipe."""
-        ingredient1 = Ingredient.objects.create(user=self.user, name='tomato', quantity=2)
-        ingredient2 = Ingredient.objects.create(user=self.user, name='foo', quantity=2)
+        ingredient1 = Ingredient.objects.create(
+            user=self.user,
+            name='tomato',
+            quantity=2
+        )
+        ingredient2 = Ingredient.objects.create(
+            user=self.user,
+            name='foo',
+            quantity=2
+        )
         recipe = Recipe.objects.create(
             title='Recipe 1',
             time_minutes=10,
@@ -153,8 +161,16 @@ class PrivateIngredientApiTests(TestCase):
 
     def test_filtered_ingredients_unique(self):
         """Test that ingredients are unique for each user."""
-        Ingredient.objects.create(user=self.user, name='tomato', quantity=2)
-        ing = Ingredient.objects.create(user=self.user, name='falafel', quantity=5)
+        Ingredient.objects.create(
+            user=self.user,
+            name='tomato',
+            quantity=2
+        )
+        ing = Ingredient.objects.create(
+            user=self.user,
+            name='falafel',
+            quantity=5
+        )
         recipe1 = Recipe.objects.create(
             title='recipe 1',
             time_minutes=10,

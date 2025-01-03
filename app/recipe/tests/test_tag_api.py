@@ -136,5 +136,5 @@ class PrivateTagApiTests(TestCase):
         recipe1.tags.add(tag)
         recipe2.tags.add(tag)
         res = self.client.get(TAG_URL, {'assigned_only': 1})
-
         self.assertEqual(len(res.data), 1)
+# Add a blank line at the end of the file

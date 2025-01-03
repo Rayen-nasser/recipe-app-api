@@ -16,6 +16,7 @@ def recipe_image_file_path(instance, filename):
     filename = f"{uuid.uuid4()}{ext}"
     return os.path.join('uploads', 'recipe', filename)
 
+
 class UserManager(BaseUserManager):
     """Define a model manager for User model with email as the username."""
 

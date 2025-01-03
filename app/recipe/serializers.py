@@ -91,7 +91,7 @@ class RecipeDetailSerializer(RecipeSerializer):
     """Serializer for Recipe objects with extra details."""
     class Meta(RecipeSerializer.Meta):
         model = Recipe
-        fields = RecipeSerializer.Meta.fields + ['description','image'] # Fixed line length
+        fields = RecipeSerializer.Meta.fields + ['description', 'image']
 
 
 class RecipeImageSerializer(serializers.ModelSerializer):
@@ -102,5 +102,4 @@ class RecipeImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'image']
         read_only_fields = ['id']
         extra_kwargs = {'image': {'required': 'True'}}
-
-
+# Add a blank line at the end of the file
